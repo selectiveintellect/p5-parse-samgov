@@ -1,12 +1,14 @@
-package Parse::SAMGov::Entity;
+package Parse::SAMGov::Exclusion::Address;
 use strict;
 use warnings;
 use 5.010;
 use Parse::SAMGov::Mo;
 
-has DUNS      => ();
-has DUNSplus4 => ();
-has CAGE      => ();
+has 'address' => [];
+has 'city';
+has 'state';
+has 'zip';
+has 'country';
 
 1;
 

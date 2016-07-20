@@ -1,0 +1,9 @@
+[PerlTidy]
+select = **/*.{pl,pm,t}
+ignore = lib/**/Mo.pm
+argv = -bar -ce -nsbl -lp -cti=1 -pt=2 -vt=1 -noll -it=2
+
+[PerlCritic]
+select = **/*.{pl,pm}
+ignore = lib/**/Mo.pm
+argv = -severity 3
