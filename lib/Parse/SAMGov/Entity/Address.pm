@@ -1,14 +1,14 @@
-package Parse::SAMGov::Exclusion::Address;
+package Parse::SAMGov::Entity::Address;
 use strict;
 use warnings;
 use 5.010;
 use Parse::SAMGov::Mo;
 
-#ABSTRACT: Defines the Address object of the entity being excluded.
+#ABSTRACT: Defines the Address object of the entity.
 
 =head1 SYNOPSIS
 
-    my $addr = Parse::SAMGov::Exclusion::Address->new(
+    my $addr = Parse::SAMGov::Entity::Address->new(
         address => '123 Baker Street, Suite 1A',
         city => 'Boringville',
         state => 'ZB',
@@ -18,7 +18,7 @@ use Parse::SAMGov::Mo;
 
 =method new
 
-Creates a new Address object for the entity or individual being excluded.
+Creates a new Address object for the entity or individual.
 
 =method address
 
@@ -27,26 +27,30 @@ postal/zip code.
 
 =method city
 
-The city name of the excluded entity's address.
+The city name of the entity's address.
 
 =method state
 
-The state or province two-character abbreviation of the excluded entity's
-address.
+The state or province of the entity's address.
+
+=method district
+
+The congressional district of the entity's address.
 
 =method country
 
-The three character country code for the excluded entity's address.
+The three character country code for the entity's address.
 
 =method zip
 
-The zip or postal code of the excluded entity's address.
+The zip or postal code of the entity's address.
 
 =cut
 
 has 'address';
 has 'city';
 has 'state';
+has 'district';
 has 'country';
 has 'zip';
 
