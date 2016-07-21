@@ -22,8 +22,8 @@ Creates a new Address object for the entity or individual being excluded.
 
 =method address
 
-This fields holds an array reference of the street information, and any other
-portion of the address of the entity or individual being excluded.
+This fields holds the address information without the city/state/country and
+postal/zip code.
 
 =method city
 
@@ -44,7 +44,7 @@ The zip or postal code of the excluded entity's address.
 
 =cut
 
-has 'address' => [];
+has 'address';
 has 'city';
 has 'state';
 has 'country';

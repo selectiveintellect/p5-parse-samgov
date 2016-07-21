@@ -10,15 +10,43 @@ can_ok(
       SAM_number CAGE NPI
       )
 );
-my $name = $e->name;
-isa_ok($name, 'Parse::SAMGov::Exclusion::Name');
-can_ok($name, qw(first middle last suffix prefix entity));
-my $address = $e->address;
-isa_ok($address, 'Parse::SAMGov::Exclusion::Address');
-can_ok($address, qw(address city state zip country));
-isa_ok($address->address,                  'ARRAY');
-isa_ok($e->active_date('01/01/1994'),      'DateTime');
+$e->name(Parse::SAMGov::Exclusion::Name->new(entity => 'ABC Corp Inc'));
+isa_ok($e->name, 'Parse::SAMGov::Exclusion::Name');
+can_ok($e->name, qw(first middle last suffix prefix entity));
+is($e->name->entity, 'ABC Corp Inc', 'Entity name matches');
+isnt($e->name->entity, undef, 'this is an entity');
+
+$e->name(
+         Parse::SAMGov::Exclusion::Name->new(first  => 'John',
+                                             middle => 'James',
+                                             last   => 'Johnson',
+                                             prefix => 'Mr',
+                                            )
+        );
+isa_ok($e->name, 'Parse::SAMGov::Exclusion::Name');
+can_ok($e->name, qw(first middle last suffix prefix entity));
+is($e->name->entity, undef,     'this is an individual');
+is($e->name->first,  'John',    'individual first name matches');
+is($e->name->last,   'Johnson', 'individual last name matches');
+is($e->name->middle, 'James',   'individual middle name matches');
+
+$e->address(
+            Parse::SAMGov::Exclusion::Address->new(
+                                                  address => '123 Baker Street',
+                                                  city    => 'Boringville',
+                                                  state   => 'AB',
+                                                  country => 'USA',
+                                                  zip     => '20195'
+            )
+           );
+isa_ok($e->address, 'Parse::SAMGov::Exclusion::Address');
+can_ok($e->address, qw(address city state zip country));
+isa_ok($e->active_date('01/01/1994'), 'DateTime');
+isa_ok($e->active_date,               'DateTime');
+is($e->active_date->mdy('/'), '01/01/1994', 'active date matches');
 isa_ok($e->termination_date('12/01/1994'), 'DateTime');
+isa_ok($e->termination_date,               'DateTime');
+is($e->termination_date->mdy('/'), '12/01/1994', 'termination date matches');
 
 done_testing();
 __END__
