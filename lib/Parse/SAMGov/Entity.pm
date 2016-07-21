@@ -4,8 +4,10 @@ use warnings;
 use 5.010;
 use Parse::SAMGov::Mo;
 
+#ABSTRACT: Object to denote each Entity in SAM
+
 has DUNS      => ();
-has DUNSplus4 => ();
+has DUNSplus4 => default => sub { '0000' };
 has CAGE      => ();
 
 1;
