@@ -27,19 +27,31 @@ this value set, it will be set as '0000'.
 
 This holds the CAGE code of the Entity.
 
+=method DODAAC
+
+This holds the DODAAC code of the entity.
+
 =cut
 
 has 'DUNS';
 has DUNSplus4 => default => sub { '0000' };
 has 'CAGE';
+has 'DODAAC';
 
-=method DODAAC
+=method extract_code
 
+This denotes whether the SAM entry is active, expired, deleted/deactivated
+during extraction of the data.
+
+=method regn_purpose
+
+This denotes whether the purpose of registration is Federal Assistance Awards,
+All Awards, IGT-only, Federal Assistance Awards & IGT or All Awards & IGT.
 
 =cut
 
-has 'DODAAC';
-has 'reg_purpose';
+has 'extract_code';
+has 'regn_purpose';
 
 sub _parse_yyyymmdd {
     if (@_) {
@@ -52,7 +64,32 @@ sub _parse_yyyymmdd {
     return;
 }
 
-has 'reg_date' => coerce => sub { _parse_yyyymmdd $_[0] };
+=method regn_date
+
+Registration date of the entity with the input in YYYYMMDD format and it returns
+a DateTime object.
+
+=method expiry_date
+
+Expiration date of the registration of the entity. The input is in YYYYMMDD
+format and it returns a DateTime object.
+
+=method lastupdate_date
+
+Last update date of the registration of the entity. The input is in YYYYMMDD
+format and it returns a DateTime object.
+
+=method activation_date
+
+Activation date of the registration of the entity. The input is in YYYYMMDD
+format and it returns a DateTime object.
+
+=cut
+
+has 'regn_date' => coerce => sub { _parse_yyyymmdd $_[0] };
+has 'expiry_date' => coerce => sub { _parse_yyyymmdd $_[0] };
+has 'lastupdate_date' => coerce => sub { _parse_yyyymmdd $_[0] };
+has 'activation_date' => coerce => sub { _parse_yyyymmdd $_[0] };
 
 1;
 
