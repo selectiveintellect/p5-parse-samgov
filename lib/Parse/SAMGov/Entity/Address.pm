@@ -47,6 +47,17 @@ The zip or postal code of the entity's address.
 
 =cut
 
+use overload
+  fallback => 1,
+  '""'     => sub {
+    my $str = $_[0]->address . ', ';
+    $str .= $_[0]->city . ', ';
+    $str .= $_[0]->district . ', ' if $_[0]->district;
+    $str .= $_[0]->state . ', ';
+    $str .= $_[0]->country . ' - ' . $_[0]->zip;
+    return $str;
+  };
+
 has 'address';
 has 'city';
 has 'state';

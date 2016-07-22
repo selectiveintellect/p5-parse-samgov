@@ -8,12 +8,37 @@ use DateTime;
 use DateTime::Format::Strptime;
 use Parse::SAMGov::Entity::Address;
 use Parse::SAMGov::Entity::PointOfContact;
+use Carp;
 
 #ABSTRACT: Object to denote each Entity in SAM
 
+use overload fallback => 1,
+    '""' => sub {
+        my $self = $_[0];
+        my $str = '';
+        $str .= $self->name if $self->name;
+        $str .= ' dba ' . $self->dba_name if $self->dba_name;
+        $str .= "\nDUNS: " . $self->DUNS if $self->DUNS;
+        $str .= '+' . $self->DUNSplus4 if $self->DUNSplus4 ne '0000';
+        $str .= "\nCAGE: " . $self->CAGE if $self->CAGE;
+        $str .= "\nDODAAC: " . $self->DODAAC if $self->DODAAC;
+        $str .= "\nStatus: " . $self->extract_code if $self->extract_code;
+        $str .= "\nUpdated: Yes" if $self->updated;
+        $str .= "\nRegistration Purpose: " . $self->regn_purpose if $self->regn_purpose;
+        $str .= "\nRegistration Date: " . $self->regn_date->ymd('-') if $self->regn_date;
+        $str .= "\nExpiry Date: " . $self->expiry_date->ymd('-') if $self->expiry_date;
+        $str .= "\nLast Update Date: " . $self->lastupdate_date->ymd('-') if $self->lastupdate_date;
+        $str .= "\nActivation Date: " . $self->activation_date->ymd('-') if $self->activation_date;
+        $str .= "\nCompany Division: " . $self->company_division if $self->company_division;
+        $str .= "\nDivision No.: " . $self->division_no if $self->division_no;
+        $str .= "\nPhysical Address: " . $self->physical_address;
+        return $str;
+    };
+
 =head1 SYNOPSIS
 
-
+    my $e = Parse::SAMGov::Entity->new(DUNS => 12345);
+    say $e; #... stringification supported ...
 
 =method DUNS
 
@@ -43,8 +68,13 @@ has 'DODAAC';
 
 =method extract_code
 
-This denotes whether the SAM entry is active, expired, deleted/deactivated
+This denotes whether the SAM entry is active or expired
 during extraction of the data.
+
+=method updated
+
+This denotes whether the SAM entry has been updated recently. Has a boolean
+value of 1 if updated and 0 or undef otherwise.
 
 =method regn_purpose
 
@@ -54,7 +84,15 @@ All Awards, IGT-only, Federal Assistance Awards & IGT or All Awards & IGT.
 =cut
 
 has 'extract_code';
-has 'regn_purpose';
+has 'updated';
+has 'regn_purpose' => coerce => sub {
+    my $p = $_[0];
+    return 'Federal Assistance Awards' if $p eq 'Z1';
+    return 'All Awards' if $p eq 'Z2';
+    return 'IGT-Only' if $p eq 'Z3';
+    return 'Federal Assistance Awards & IGT' if $p eq 'Z4';
+    return 'All Awards & IGT' if $p eq 'Z5';
+};
 
 sub _parse_yyyymmdd {
     if (@_) {
@@ -271,6 +309,46 @@ has 'delinquent_fed_debt';
 has 'exclusion_status';
 has 'is_private';
 has 'disaster_response' => default => sub { [] };
+
+sub load {
+    my $self = shift;
+    my @data = @_;
+    use Data::Dumper;
+#    say STDERR Dumper(\@data);
+    return unless (scalar(@data) == 150);
+    $self->DUNS($data[0]);
+    $self->DUNSplus4($data[1]) if $data[1];
+    $self->CAGE($data[2]) if $data[2];
+    $self->DODAAC($data[3]) if $data[3];
+    $self->updated(0);
+    if ($data[4] =~ /A|2|3/x) {
+        $self->extract_code('active');
+        $self->updated(1) if $data[4] eq '3';
+    } elsif ($data[4] =~ /E|1|4/x) {
+        $self->extract_code('expired');
+        $self->updated(1) if $data[4] eq '1';
+    }
+    $self->regn_purpose($data[5]) if $data[5];
+    $self->regn_date($data[6]) if $data[6];
+    $self->expiry_date($data[7]) if $data[7];
+    $self->lastupdate_date($data[8]) if $data[8];
+    $self->activation_date($data[9]) if $data[9];
+    $self->name($data[10]) if $data[10];
+    $self->dba_name($data[11]) if $data[11];
+    $self->company_division($data[12]) if $data[12];
+    $self->division_number($data[13]) if $data[13];
+    my $paddr = Parse::SAMGov::Entity::Address->new(
+        address => join(", ", $data[14], $data[15]),
+        city => $data[16],
+        state => $data[17],
+        zip => ($data[19] ? "$data[18]-$data[19]" : $data[18]),
+        country => $data[20],
+        district => $data[21],
+    );
+    $self->physical_address($paddr);
+
+    1;
+}
 
 1;
 
