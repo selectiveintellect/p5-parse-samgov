@@ -2,6 +2,7 @@ package Parse::SAMGov::Entity;
 use strict;
 use warnings;
 use 5.010;
+use Data::Dumper;
 use Parse::SAMGov::Mo;
 use URI;
 use DateTime;
@@ -31,7 +32,45 @@ use overload fallback => 1,
         $str .= "\nActivation Date: " . $self->activation_date->ymd('-') if $self->activation_date;
         $str .= "\nCompany Division: " . $self->company_division if $self->company_division;
         $str .= "\nDivision No.: " . $self->division_no if $self->division_no;
-        $str .= "\nPhysical Address: " . $self->physical_address;
+        $str .= "\nPhysical Address: " . $self->physical_address if $self->physical_address;
+        $str .= "\nBusiness Start Date: " . $self->start_date->ymd('-') if $self->start_date;
+        $str .= sprintf "\nFiscal Year End: %02d-%02d", $self->fiscalyear_date->month, $self->fiscalyear_date->day
+                if $self->fiscalyear_date;
+        $str .= "\nCorporate URL: " . $self->url if $self->url;
+        $str .= "\nBusiness Types: [" . join(',', @{$self->biztype}) . "]";
+        my $pnaics;
+        foreach my $k (keys %{$self->NAICS}) {
+            $pnaics = $k if $self->NAICS->{$k}->{is_primary};
+            last if $pnaics;
+        }
+        $str .= "\nNAICS Codes: [" . join(',', keys %{$self->NAICS}) . "]";
+        $str .= "\nSmall Business: " . ($self->NAICS->{$pnaics}->{small_biz} ? 'Yes' : 'No');
+        {
+            local $Data::Dumper::Indent = 1;
+            local $Data::Dumper::Terse = 1;
+            $str .= "\nNAICS Details: " . Dumper($self->NAICS);
+        }
+        $str .= "\nPSC Codes: [" . join(',', @{$self->PSC}) . "]";
+        $str .= "\nMailing Address: " . $self->mailing_address if $self->mailing_address;
+        $str .= "\nGovt Business POC: " . $self->POC_gov if $self->POC_gov;
+        $str .= "\nGovt Business POC (alternate): " . $self->POC_gov_alt if $self->POC_gov_alt;
+        $str .= "\nPast Performance POC: " . $self->POC_pastperf if $self->POC_pastperf;
+        $str .= "\nPast Performance POC (alternate): " . $self->POC_pastperf_alt if $self->POC_pastperf_alt;
+        $str .= "\nElectronic POC: " . $self->POC_elec if $self->POC_elec;
+        $str .= "\nElectronic POC (alternate): " . $self->POC_elec_alt if $self->POC_elec_alt;
+        $str .= "\nDelinquent Federal Debt: " . ($self->delinquent_fed_debt ? 'Yes' : 'No');
+        $str .= "\nExclusion Status: " . $self->exclusion_status if $self->exclusion_status;
+        {
+            local $Data::Dumper::Indent = 0;
+            local $Data::Dumper::Terse = 1;
+            $str .= "\nSBA Business Type: " . Dumper($self->SBA);
+        }
+        {
+            local $Data::Dumper::Indent = 0;
+            local $Data::Dumper::Terse = 1;
+            $str .= "\nDisaster Response Type: " . Dumper($self->disaster_response);
+        }
+        $str .= "\nIs Private Listing: " . ($self->is_private ? 'Yes' : 'No');
         return $str;
     };
 
@@ -62,7 +101,7 @@ This holds the DODAAC code of the entity.
 =cut
 
 has 'DUNS';
-has DUNSplus4 => default => sub { '0000' };
+has DUNSplus4 =>  default => sub { '0000' };
 has 'CAGE';
 has 'DODAAC';
 
@@ -97,6 +136,10 @@ has 'regn_purpose' => coerce => sub {
 sub _parse_yyyymmdd {
     if (@_) {
         my $d = shift;
+        if (length($d) == 4) {
+            my $y  = DateTime->now->year;
+            $d = "$y$d";
+        }
         state $Strp =
           DateTime::Format::Strptime->new(pattern   => '%Y%m%d',
                                           time_zone => 'America/New_York',);
@@ -207,18 +250,24 @@ Get/Set the various business types that the entity holds. Requires an array
 reference. The full list of business type codes can be retrieved from the SAM
 Functional Data Dictionary.
 
-=method biztype_sba
-
-Get/Set the Small Business Administration business type codes as an array ref.
-
 =method NAICS
 
-Get/Set the NAICS codes for the entity. This requires an array reference. The
-first element in the array is the primary NAICS code of the entity.
+Get/Set the NAICS codes for the entity. This is a hash reference with the keys
+being the numeric NAICS codes and the values being a hash reference with the
+following keys:
 
-=method NAICS_exceptions
-
-This holds an array of NAICS codes that are exceptions. Requires an array ref.
+    {
+        124567 => {
+            small_biz => 1,
+            exceptions => {
+                small_biz => 0,
+                # ... undocumented others ...
+            },
+        },
+        # ...
+    }
+whether it is a small
+business (value is 1)  or not (value is 0) or has an exception (value is 2).
 
 =method PSC
 
@@ -228,9 +277,10 @@ Get/Set the PSC codes for the entity. This requires an array reference.
 
 This denotes whether the entity uses a credit card.
 
-=method correspondence_flag
+=method correspondence_type
 
 This denotes whether the entity prefers correspondence by mail, fax or email.
+Returns a string of value 'mail', 'fax' or 'email'.
 
 =method mailing_address
 
@@ -278,6 +328,17 @@ Get/Set the exclusion status flag.
 
 This flag denotes whether the listing is private or not.
 
+=method SBA
+
+This holds a hash-ref of Small Business Administration codes such as Hubzone,
+8(a) certifications and the expiration dates. The structure looks like below:
+
+    {
+        A4 => { description => 'SBA Certified Small Disadvantaged Busines',
+                expiration => '2016-12-01', #... this is a DateTime object...
+              },
+    }    
+
 =method disaster_response
 
 This holds an array ref of disaster response (FEMA) codes that the entity falls
@@ -286,12 +347,10 @@ under, if applicable.
 =cut
 
 has 'biztype' => default => sub { [] };
-has 'biztype_sba' => default => sub { [] };
-has 'NAICS' => default => sub { [] };
-has 'NAICS_exceptions' => default => sub { [] };
+has 'NAICS' => default => sub { {} };
 has 'PSC' => default => sub { [] };
 has 'creditcard';
-has 'correspondence_flag';
+has 'correspondence_type';
 has 'mailing_address' => default => sub { return Parse::SAMGov::Entity::Address->new; };
 has 'POC_gov' => default => sub { return
     Parse::SAMGov::Entity::PointOfContact->new; };
@@ -308,45 +367,196 @@ has 'POC_elec_alt' => default => sub {
 has 'delinquent_fed_debt';
 has 'exclusion_status';
 has 'is_private';
-has 'disaster_response' => default => sub { [] };
+has 'disaster_response' => default => sub { {} };
+has 'SBA' => default => sub { {} };
+
+has 'SBA_descriptions' => default => sub {
+    {
+        A4 => 'SBA Certified Small Disadvantaged Business',
+        A6 => 'SBA Certified 8A Program Participant',
+        JT => 'SBA Certified 8A Joint Venture',
+        XX => 'SBA Certified HUBZone Firm',
+    }
+};
+
+sub _trim {
+    # from Mojo::Util::trim
+    my $s = shift;
+    $s =~ s/^\s+//g;
+    $s =~ s/\s+$//g;
+    return $s;
+}
 
 sub load {
     my $self = shift;
-    my @data = @_;
-    use Data::Dumper;
-#    say STDERR Dumper(\@data);
-    return unless (scalar(@data) == 150);
-    $self->DUNS($data[0]);
-    $self->DUNSplus4($data[1]) if $data[1];
-    $self->CAGE($data[2]) if $data[2];
-    $self->DODAAC($data[3]) if $data[3];
+    return unless (scalar(@_) == 150);
+    $self->DUNS(shift);
+    $self->DUNSplus4(shift || '0000');
+    $self->CAGE(shift);
+    $self->DODAAC(shift);
     $self->updated(0);
-    if ($data[4] =~ /A|2|3/x) {
+    my $code = shift;
+    if ($code =~ /A|2|3/x) {
         $self->extract_code('active');
-        $self->updated(1) if $data[4] eq '3';
-    } elsif ($data[4] =~ /E|1|4/x) {
+        $self->updated(1) if $code eq '3';
+    } elsif ($code =~ /E|1|4/x) {
         $self->extract_code('expired');
-        $self->updated(1) if $data[4] eq '1';
+        $self->updated(1) if $code eq '1';
     }
-    $self->regn_purpose($data[5]) if $data[5];
-    $self->regn_date($data[6]) if $data[6];
-    $self->expiry_date($data[7]) if $data[7];
-    $self->lastupdate_date($data[8]) if $data[8];
-    $self->activation_date($data[9]) if $data[9];
-    $self->name($data[10]) if $data[10];
-    $self->dba_name($data[11]) if $data[11];
-    $self->company_division($data[12]) if $data[12];
-    $self->division_number($data[13]) if $data[13];
+    $self->regn_purpose(shift);
+    $self->regn_date(shift);
+    $self->expiry_date(shift);
+    $self->lastupdate_date(shift);
+    $self->activation_date(shift);
+    $self->name(_trim(shift));
+    $self->dba_name(_trim(shift));
+    $self->company_division(_trim(shift));
+    $self->division_no(_trim(shift));
     my $paddr = Parse::SAMGov::Entity::Address->new(
-        address => join(", ", $data[14], $data[15]),
-        city => $data[16],
-        state => $data[17],
-        zip => ($data[19] ? "$data[18]-$data[19]" : $data[18]),
-        country => $data[20],
-        district => $data[21],
+        # the order of shifting matters
+        address => _trim(join(' ', shift, shift)),
+        city => shift,
+        state => shift,
+        zip => sprintf("%s-%s", shift, shift),
+        country => shift,
+        district => shift,
     );
     $self->physical_address($paddr);
-
+    $self->start_date(shift);
+    $self->fiscalyear_date(shift);
+    $self->url(_trim(shift));
+    $self->entity_structure(shift);
+    $self->incorporation_state(shift);
+    $self->incorporation_country(shift);
+    my $count = int(_trim(shift) || 0);
+    if ($count > 0) {
+        my @biztypes = grep { length($_) > 0 } split /~/, shift;
+        $self->biztype([@biztypes]);
+    } else {
+        shift; # ignore
+    }
+    my $pnaics = _trim(shift);
+    $self->NAICS->{$pnaics} = {};
+    $count = int(_trim(shift) || 0) + (length($pnaics) ? 1 : 0);
+    if ($count > 0) {
+        my @naics = grep { length($_) > 0 } split /~/, shift;
+        foreach my $c (@naics) {
+            if ($c =~ /(\d+)(Y|N|E)/) {
+                $self->NAICS->{$1} = {} unless ref $self->NAICS->{$1} eq 'HASH';
+                $self->NAICS->{$1}->{is_primary} = 1 if $pnaics eq $1;
+                $self->NAICS->{$1}->{small_biz} = 1 if $2 eq 'Y';
+                $self->NAICS->{$1}->{small_biz} = 0 if $2 eq 'N';
+                $self->NAICS->{$1}->{exception} = {} if $2 eq 'E';
+            }
+        }
+    } else {
+        shift; # ignore
+    }
+    $count = int(_trim(shift) || 0);
+    if ($count > 0) {
+        my @psc = grep { length ($_) > 0 } split /~/, shift;
+        $self->PSC([@psc]);
+    } else {
+        shift; # ignore
+    }
+    $self->creditcard((shift eq 'Y') ? 1 : 0);
+    $code = shift; # re-use variable
+    $self->correspondence_type('mail') if $code eq 'M';
+    $self->correspondence_type('fax') if $code eq 'F';
+    $self->correspondence_type('email') if $code eq 'E';
+    my $maddr = Parse::SAMGov::Entity::Address->new(
+        # the order of shifting matters
+        address => _trim(join(' ', shift, shift)),
+        city => shift,
+        zip => sprintf("%s-%s", shift, shift),
+        country => shift,
+        state => shift,
+    );
+    $self->mailing_address($maddr);
+    for my $i (0..5) {
+        my $poc = Parse::SAMGov::Entity::PointOfContact->new(
+            first => _trim(shift),
+            middle => _trim(shift),
+            last => _trim(shift),
+            title => _trim(shift),
+            address => _trim(join(' ', shift, shift)),
+            city => shift,
+            zip => sprintf("%s-%s", shift, shift),
+            country => shift,
+            state => shift,
+            phone => shift,
+            phone_ext => shift,
+            phone_nonUS => shift,
+            fax => shift,
+            email => shift,
+        );
+        $self->POC_gov($poc) if $i == 0;
+        $self->POC_gov_alt($poc) if $i == 1;
+        $self->POC_pastperf($poc) if $i == 2;
+        $self->POC_pastperf_alt($poc) if $i == 3;
+        $self->POC_elec($poc) if $i == 4;
+        $self->POC_elec_alt($poc) if $i == 5;
+    }
+    $count = int(_trim(shift) || 0);
+    if ($count > 0) {
+        my @naics = grep { length($_) > 0 } split /~/, shift;
+        foreach my $c (@naics) {
+            if ($c =~ /(\d+)([YN ]*)/) {
+                my @es = split //, $2;
+                if (@es) {
+                    $self->NAICS->{$1}->{exception} = {} unless ref $self->NAICS->{$1}->{exception} eq 'HASH';
+                    $self->NAICS->{$1}->{exception}->{small_biz} = 1 if $es[0] eq 'Y';
+                    $self->NAICS->{$1}->{exception}->{small_biz} = 0 if $es[0] eq 'N';
+                }
+            }
+        }
+    } else {
+        shift; # ignore
+    }
+    $code = shift;
+    $self->delinquent_fed_debt(1) if $code eq 'Y';
+    $self->delinquent_fed_debt(0) if $code eq 'N';
+    $self->exclusion_status(_trim(shift));
+    $count = int(_trim(shift) || 0);
+    if ($count > 0) {
+        my @sba = grep { length($_) > 0 } split /~/, shift;
+        foreach my $c (@sba) {
+            if ($c =~ /(\w{2})(\d{8})/) {
+                my $t = $1;
+                $self->SBA->{$t} = {} unless ref $self->SBA->{$t} eq 'HASH';
+                $self->SBA->{$t}->{description} = $self->SBA_descriptions->{$t};
+                $self->SBA->{$t}->{expiration} = _parse_yyyymmdd($2);
+            }
+        }
+    } else {
+        shift; # ignore
+    }
+    $self->is_private(length(shift) ? 1 : 0);
+    $count = int(_trim(shift) || 0);
+    if ($count > 0) {
+        my @dres = grep { length($_) > 0 } split /~/, shift;
+        my $h = {};
+        my %desc = (
+            ANY => 'Any area',
+            CTY => 'County',
+            STA => 'State',
+            MSA => 'Metropolitan Service Area',
+        );
+        foreach my $c (@dres) {
+            if ($c =~ /(\w{3})(\w*)/) {
+                $h->{$1} = {} unless ref $h->{$1} eq 'HASH';
+                $h->{$1}->{description} = $desc{$1};
+                $h->{$1}->{areas} = [] unless ref $h->{$1}->{areas} eq 'HASH';
+                my $a = _trim($2);
+                push @{$h->{$1}->{areas}}, $a if length $a;
+            }
+        }
+        $self->disaster_response($h);
+    } else {
+        shift; # ignore
+    }
+    my $eof = shift;
+    carp "Invalid end of record '$eof' seen. Expected '!end'" if $eof ne '!end';
     1;
 }
 

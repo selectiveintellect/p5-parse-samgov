@@ -35,7 +35,7 @@ The state or province of the entity's address.
 
 =method district
 
-The congressional district of the entity's address.
+The congressional district number of the entity's address.
 
 =method country
 
@@ -50,11 +50,12 @@ The zip or postal code of the entity's address.
 use overload
   fallback => 1,
   '""'     => sub {
-    my $str = $_[0]->address . ', ';
-    $str .= $_[0]->city . ', ';
-    $str .= $_[0]->district . ', ' if $_[0]->district;
-    $str .= $_[0]->state . ', ';
-    $str .= $_[0]->country . ' - ' . $_[0]->zip;
+    my $str = '';
+    $str .= $_[0]->address if length $_[0]->address;
+    $str .= ', ' . $_[0]->city if length $_[0]->city;
+    $str .= ', ' . $_[0]->state if length $_[0]->state;
+    $str .= ', ' . $_[0]->country if length $_[0]->country;
+    $str .= ' - ' . $_[0]->zip if length $_[0]->zip;
     return $str;
   };
 
@@ -63,7 +64,10 @@ has 'city';
 has 'state';
 has 'district';
 has 'country';
-has 'zip';
+has 'zip' => coerce => sub {
+    chop $_[0] if ($_[0] =~ /-$/);
+    return $_[0];
+};
 
 1;
 

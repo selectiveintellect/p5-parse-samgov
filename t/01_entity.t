@@ -10,9 +10,9 @@ can_ok(
       name dba_name company_division division_no
       physical_address start_date fiscalyear_date
       url entity_structure incorporation_state
-      incorporation_country biztype biztype_sba
-      NAICS NAICS_exceptions PSC creditcard
-      correspondence_flag mailing_address
+      incorporation_country biztype
+      NAICS SBA PSC creditcard
+      correspondence_type mailing_address
       delinquent_fed_debt exclusion_status
       is_private disaster_response
       POC_gov POC_gov_alt POC_pastperf
@@ -56,7 +56,7 @@ my $poc = $e->POC_gov;
 isa_ok($poc, 'Parse::SAMGov::Entity::PointOfContact');
 isa_ok($poc, 'Parse::SAMGov::Entity::Address');
 can_ok(
-    $poc, qw(address city state zip country phone phone_ext phone_other
+    $poc, qw(address city state zip country phone phone_ext phone_nonUS
       fax email first last middle title));
 isa_ok($e->POC_gov_alt,      'Parse::SAMGov::Entity::PointOfContact');
 isa_ok($e->POC_pastperf,     'Parse::SAMGov::Entity::PointOfContact');
@@ -69,13 +69,12 @@ is($e->start_date->ymd('/'), '2016/01/01', 'start date matches');
 isa_ok($e->fiscalyear_date('20161231'), 'DateTime');
 is($e->fiscalyear_date->ymd('/'), '2016/12/31', 'fiscal year date matches');
 isa_ok($e->url('http://sam.gov'), 'URI');
-is($e->DUNSplus4,             '0000',  'DUNS+4 default is 0000');
+is($e->DUNSplus4, '0000',  'DUNS+4 default is 0000');
 is(ref $e->biztype,           'ARRAY', 'biztype is an array');
-is(ref $e->biztype_sba,       'ARRAY', 'biztype_sba is an array');
-is(ref $e->NAICS,             'ARRAY', 'NAICS is an array');
-is(ref $e->NAICS_exceptions,  'ARRAY', 'NAICS_exceptions is an array');
+is(ref $e->NAICS,             'HASH', 'NAICS is an hashref');
 is(ref $e->PSC,               'ARRAY', 'PSC is an array');
-is(ref $e->disaster_response, 'ARRAY', 'disaster_response is an array');
+is(ref $e->SBA,               'HASH', 'SBA is an hashref');
+is(ref $e->disaster_response, 'HASH', 'disaster_response is an hashref');
 
 done_testing();
 __END__
