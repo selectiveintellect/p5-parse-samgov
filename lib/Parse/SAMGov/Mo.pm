@@ -1,4 +1,5 @@
 package Parse::SAMGov::Mo;
+
 #use Mo qw'build builder default import coerce is chain';
 #   The following line of code was produced from the previous line by
 #   Mo::Inline version 0.40

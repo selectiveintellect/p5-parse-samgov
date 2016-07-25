@@ -1,4 +1,5 @@
 package Parse::SAMGov::Entity;
+
 use strict;
 use warnings;
 use 5.010;
