@@ -559,7 +559,7 @@ sub load {
     }
     my $eof = shift;
     carp "Invalid end of record '$eof' seen. Expected '!end'" if $eof ne '!end';
-    1;
+    return 1;
 }
 
 1;

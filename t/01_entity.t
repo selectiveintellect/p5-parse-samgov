@@ -69,12 +69,12 @@ is($e->start_date->ymd('/'), '2016/01/01', 'start date matches');
 isa_ok($e->fiscalyear_date('20161231'), 'DateTime');
 is($e->fiscalyear_date->ymd('/'), '2016/12/31', 'fiscal year date matches');
 isa_ok($e->url('http://sam.gov'), 'URI');
-is($e->DUNSplus4, '0000',  'DUNS+4 default is 0000');
+is($e->DUNSplus4,             '0000',  'DUNS+4 default is 0000');
 is(ref $e->biztype,           'ARRAY', 'biztype is an array');
-is(ref $e->NAICS,             'HASH', 'NAICS is an hashref');
+is(ref $e->NAICS,             'HASH',  'NAICS is an hashref');
 is(ref $e->PSC,               'ARRAY', 'PSC is an array');
-is(ref $e->SBA,               'HASH', 'SBA is an hashref');
-is(ref $e->disaster_response, 'HASH', 'disaster_response is an hashref');
+is(ref $e->SBA,               'HASH',  'SBA is an hashref');
+is(ref $e->disaster_response, 'HASH',  'disaster_response is an hashref');
 
 done_testing();
 __END__

@@ -269,7 +269,7 @@ sub load {
     $self->SAM_number(_trim (shift));
     $self->CAGE(_trim(shift));
     $self->NPI(_trim(shift));
-    1;
+    return 1;
 }
 
 1;

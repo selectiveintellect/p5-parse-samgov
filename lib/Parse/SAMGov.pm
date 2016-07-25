@@ -54,9 +54,9 @@ sub parse_file {
     my $io = io $filename;
     croak "Unable to create IO::All object for reading $filename"
       unless defined $io;
-    my $result       = [];
-    my $is_entity = 0;
-    my $entity_info  = {};
+    my $result      = [];
+    my $is_entity   = 0;
+    my $entity_info = {};
     while (my $line = $io->getline) {
         chomp $line;
         $line =~ s/^\s+//g;
@@ -64,7 +64,7 @@ sub parse_file {
         next unless length $line;
         my $obj = Parse::SAMGov::Entity->new;
         if ($line =~ /BOF PUBLIC\s+(\d{8})\s+(\d{8})\s+(\d+)\s+(\d+)/) {
-            $is_entity         = 1;
+            $is_entity            = 1;
             $entity_info->{date}  = $1;
             $entity_info->{rows}  = $3;
             $entity_info->{seqno} = $4;
@@ -76,7 +76,7 @@ sub parse_file {
                   or $entity_info->{seqno} ne $4);
             last;
         } else {
-            last unless $is_entity; # skip this loop and do something else
+            last unless $is_entity;    # skip this loop and do something else
             my @data = split /\|/x, $line;
             carp "Invalid data line \n$line\n" unless $obj->load(@data);
         }
@@ -87,8 +87,9 @@ sub parse_file {
         }
     }
     unless ($is_entity) {
-        my $csv = Text::CSV_XS->new({ binary => 1 }) or
-            croak "Failed to create Text::CSV_XS object: " . Text::CSV_XS->error_diag();
+        my $csv = Text::CSV_XS->new({ binary => 1 })
+          or croak "Failed to create Text::CSV_XS object: "
+          . Text::CSV_XS->error_diag();
         my $obj = Parse::SAMGov::Exclusion->new;
         while (my $row = $csv->getline($io->io_handle)) {
             carp "Invalid data line \n$row\n" unless $obj->load(@$row);
