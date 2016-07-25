@@ -51,8 +51,8 @@ use overload
   fallback => 1,
   '""'     => sub {
     my $str = '';
-    $str .= $_[0]->address if length $_[0]->address;
-    $str .= ', ' . $_[0]->city if length $_[0]->city;
+    $str .= $_[0]->address . ', ' if length $_[0]->address;
+    $str .= $_[0]->city if length $_[0]->city;
     $str .= ', ' . $_[0]->state if length $_[0]->state;
     $str .= ', ' . $_[0]->country if length $_[0]->country;
     $str .= ' - ' . $_[0]->zip if length $_[0]->zip;

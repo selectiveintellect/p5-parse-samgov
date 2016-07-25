@@ -31,7 +31,7 @@ is($e->name->last,   'Johnson', 'individual last name matches');
 is($e->name->middle, 'James',   'individual middle name matches');
 
 $e->address(
-            Parse::SAMGov::Exclusion::Address->new(
+            Parse::SAMGov::Entity::Address->new(
                                                   address => '123 Baker Street',
                                                   city    => 'Boringville',
                                                   state   => 'AB',
@@ -39,7 +39,7 @@ $e->address(
                                                   zip     => '20195'
             )
            );
-isa_ok($e->address, 'Parse::SAMGov::Exclusion::Address');
+isa_ok($e->address, 'Parse::SAMGov::Entity::Address');
 can_ok($e->address, qw(address city state zip country));
 isa_ok($e->active_date('01/01/1994'), 'DateTime');
 isa_ok($e->active_date,               'DateTime');

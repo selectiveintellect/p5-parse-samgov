@@ -57,6 +57,19 @@ III etc.
 
 =cut
 
+use overload fallback => 1,
+    '""' => sub {
+        my $self = $_[0];
+        return $self->entity if length $self->entity;
+        my $str = '';
+        $str .= $self->prefix . ' ' if length $self->prefix;
+        $str .= $self->first if length $self->first;
+        $str .= ' ' . $self->middle if length $self->middle;
+        $str .= ' ' . $self->last if length $self->last;
+        $str .= ' ' . $self->suffix if length $self->suffix;
+        return $str;
+    };
+
 has 'entity';
 has 'prefix';
 has 'first';

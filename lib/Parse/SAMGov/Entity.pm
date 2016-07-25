@@ -44,7 +44,9 @@ use overload fallback => 1,
             last if $pnaics;
         }
         $str .= "\nNAICS Codes: [" . join(',', keys %{$self->NAICS}) . "]";
-        $str .= "\nSmall Business: " . ($self->NAICS->{$pnaics}->{small_biz} ? 'Yes' : 'No');
+        if ($pnaics) {
+            $str .= "\nSmall Business: " . ($self->NAICS->{$pnaics}->{small_biz} ? 'Yes' : 'No');
+        }
         {
             local $Data::Dumper::Indent = 1;
             local $Data::Dumper::Terse = 1;

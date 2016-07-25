@@ -2,13 +2,40 @@ package Parse::SAMGov::Exclusion;
 use strict;
 use warnings;
 use 5.010;
-use Parse::SAMGov::Mo;
+use Data::Dumper;
 use DateTime;
 use DateTime::Format::Strptime;
+use Parse::SAMGov::Mo;
 use Parse::SAMGov::Exclusion::Name;
-use Parse::SAMGov::Exclusion::Address;
+use Parse::SAMGov::Entity::Address;
 
 #ABSTRACT: defines the SAM Exclusions object
+
+use overload fallback => 1,
+    '""' => sub {
+        my $self = $_[0];
+        my $str = '';
+        $str .= $self->classification . ': ' . $self->name;
+        $str .= "\nAddress: " . $self->address if $self->address;
+        $str .= "\nDUNS: " . $self->DUNS if $self->DUNS;
+        $str .= "\nCAGE: " . $self->CAGE if $self->CAGE;
+        $str .= "\nSAM no.: " . $self->SAM_number if $self->SAM_number;
+        $str .= "\nNational Provider Identifier: " . $self->NPI if $self->NPI;
+        $str .= "\nActive Date: " . $self->active_date->ymd('-') if $self->active_date;
+        if ($self->termination_date->year() == 2200) {
+            $str .= "\nTermination Date: Indefinite";
+        } else {
+            $str .= "\nTermination Date: " . $self->termination_date->ymd('-') if $self->termination_date;
+        }
+        $str .= "\nCross Reference: " . $self->crossref if $self->crossref;
+        $str .= "\nRecord status: " . $self->record_status if $self->record_status;
+        $str .= "\nExclusion Program: " . $self->xprogram if $self->xprogram;
+        $str .= "\nExclusion Agency: " . $self->xagency if $self->xagency;
+        $str .= "\nExclusion Type: " . $self->xtype if $self->xtype;
+        $str .= "\nExclusion Type(Cause & Treatment Code): " . $self->CT_code if $self->CT_code;
+        $str .= "\nAdditional Comments: " . $self->comments if $self->comments;
+        return $str;
+    };
 
 =head1 SYNOPSIS
 
@@ -46,7 +73,7 @@ has name => default => sub {
 
 =method address
 
-This sets/gets an object of L<Parse::SAMGov::Exclusion::Address> which holds the
+This sets/gets an object of L<Parse::SAMGov::Entity::Address> which holds the
 primary address of the entity or individual being excluded. It includes the
 city, two character abbreviation of state/province, three character abbreviation
 of country and a 10 character zip/postal code.
@@ -54,7 +81,7 @@ of country and a 10 character zip/postal code.
 =cut
 
 has address => default => sub {
-    return Parse::SAMGov::Exclusion::Address->new;
+    return Parse::SAMGov::Entity::Address->new;
 };
 
 =method DUNS
@@ -198,6 +225,52 @@ identify themselves in a standard way throughout their industry.
 =cut
 
 has 'NPI';
+
+sub _trim {
+    # from Mojo::Util::trim
+    my $s = shift;
+    $s =~ s/^\s+//g;
+    $s =~ s/\s+$//g;
+    return $s;
+}
+
+sub load {
+    my $self = shift;
+    return unless scalar(@_) >= 28;
+    $self->classification(_trim(shift));
+    my $name = Parse::SAMGov::Exclusion::Name->new(
+        entity => _trim(shift),
+        prefix => _trim(shift),
+        first => _trim(shift),
+        middle => _trim(shift),
+        last => _trim(shift),
+        suffix => _trim(shift),
+    );
+    $self->name($name);
+    my $addr = Parse::SAMGov::Entity::Address->new(
+        # the order of shifting matters
+        address => _trim(join(' ', shift, shift, shift, shift)),
+        city => _trim(shift),
+        state => _trim(shift),
+        country => _trim(shift),
+        zip => _trim(shift),
+    );
+    $self->address($addr);
+    $self->DUNS(_trim(shift));
+    $self->xprogram(_trim(shift));
+    $self->xagency(_trim(shift));
+    $self->CT_code(_trim(shift));
+    $self->xtype(_trim(shift));
+    $self->comments(_trim(shift));
+    $self->active_date(shift);
+    $self->termination_date(shift);
+    $self->record_status(_trim(shift));
+    $self->crossref(_trim(shift));
+    $self->SAM_number(_trim (shift));
+    $self->CAGE(_trim(shift));
+    $self->NPI(_trim(shift));
+    1;
+}
 
 1;
 __END__

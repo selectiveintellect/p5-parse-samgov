@@ -29,6 +29,29 @@ ENTITY
         isa_ok($e, 'Parse::SAMGov::Entity');
         note $e;
     }
+    unlink $filename;
+    done_testing();
+};
+
+subtest 'Parse Exclusion File' => sub {
+    my $content = << 'EXCLUSION';
+"Classification","Name","Prefix","First","Middle","Last","Suffix","Address 1","Address 2","Address 3","Address 4","City","State / Province","Country","Zip Code","DUNS","Exclusion Program","Excluding Agency","CT Code","Exclusion Type","Additional Comments","Active Date","Termination Date","Record Status","Cross-Reference","SAM Number","CAGE","NPI"
+"Individual","","","DAVID","M.","FINK","","","","","","METUCHEN","NJ","USA","08840","","Reciprocal","HHS","Z1","Prohibition/Restriction","Excluded by the Department of Health and Human Services from participation in all Federal health care programs pursuant to 42 U.S.C. ? 1320a-7 or other sections of the Social Security Act, as amended and codified in Chapter 7 of Title 42 of the United States Code (the scope and effect of Federal health care program exclusions is described in 42 C.F.R. ? 1001.1901).","05/20/2003","Indefinite","","","S4MR3MT0K","",""
+"Individual","","","DAVID","M.","FINK","","","","","","METUCHEN","NJ","USA","08840","","Reciprocal","OPM","Z2","Prohibition/Restriction","","05/12/2005","Indefinite","","","S4MR3MT0K","",""
+"Individual","","","DAVID","B.","FINZI","","","","","","MIAMI","FL","USA","331303038","","Reciprocal","HUD","R","Ineligible (Proceedings Completed)","","07/30/2007","Indefinite","","","S4MR3R0D2","",""
+"Individual","","","DAVID","MICHAEL","FISHER","","","","","","SHAMOKIN","PA","USA","17872","","Reciprocal","HHS","Z1","Prohibition/Restriction","Excluded by the Department of Health and Human Services from participation in all Federal health care programs pursuant to 42 U.S.C. ? 1320a-7 or other sections of the Social Security Act, as amended and codified in Chapter 7 of Title 42 of the United States Code (the scope and effect of Federal health care program exclusions is described in 42 C.F.R. ? 1001.1901).","02/20/2001","Indefinite","","","S4MR3QK9Q","",""
+EXCLUSION
+    my ($ftmp, $filename) = tempfile();
+    $content > io($filename);
+    my $exclusions = $p->parse_file($filename);
+    isnt($exclusions, undef, 'Exclusions were parsed');
+    isa_ok($exclusions, 'ARRAY');
+    cmp_ok(scalar(@$exclusions), '>', 0, 'Parsed exclusions >= 1');
+    foreach my $e (@$exclusions) {
+        isa_ok($e, 'Parse::SAMGov::Exclusion');
+        note $e;
+    }
+    unlink $filename;
     done_testing();
 };
 
