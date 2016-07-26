@@ -1,5 +1,8 @@
 {{$NEXT}}
 
+    Updating the META.yml to have proper Github repo URLs and updating the pod
+to have proper links to the objects
+
 0.101     2016-07-25 14:39:05-04:00 America/New_York
 
     Updating Initial release with versioning done better.

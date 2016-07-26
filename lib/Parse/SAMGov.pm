@@ -31,7 +31,7 @@ use Parse::SAMGov::Mo;
 =method parse_file
 
 This method takes as arguments the file to be parsed and returns an array
-reference of Parse::SAMGov::Entity or Parse::SAMGOv::Exclusion objects
+reference of L<Parse::SAMGov::Entity> or L<Parse::SAMGOv::Exclusion> objects
 depending on the data being parsed. Returns undef if the type is not 'entity' or
 'exclusion'. If the third argument is a coderef then passes each Entity or
 Exclusion object into the callback instead rather than returning it. This can be
@@ -46,6 +46,11 @@ function returns an array reference only if the callback mode is not used.
         #... do something ...
     }, $optional_user_arg);
 
+
+=head1 SEE ALSO
+
+L<Parse::SAMGov::Entity> and L<Parse::SAMGov::Exclusion> for the object
+definitions.
 
 =cut
 
