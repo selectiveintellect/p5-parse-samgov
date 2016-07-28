@@ -20,6 +20,16 @@ use Parse::SAMGov::Mo;
         ## do something with each entity
         say $e->DUNS, ' is a valid entity';
     }
+    #... use in filter mode like grep ...
+    my $entities_541511 = $parser->parse_file(entity =>
+                                    'SAM_PUBLIC_DAILY_20160701.dat',
+                                    sub {
+                                        # filter all companies with NAICS code
+                                        # being 541511
+                                        return $_[0] if exists $_[0]->NAICS->{541511};
+                                        return undef;
+                                    });
+
     # ... do something ...
     my $exclusions = $parser->parse_file(exclusion => 'SAM_Exclusions_Public_Extract_16202.CSV');
     foreach my $e (@$exclusions) {
@@ -34,16 +44,17 @@ This method takes as arguments the file to be parsed and returns an array
 reference of L<Parse::SAMGov::Entity> or L<Parse::SAMGOv::Exclusion> objects
 depending on the data being parsed. Returns undef if the type is not 'entity' or
 'exclusion'. If the third argument is a coderef then passes each Entity or
-Exclusion object into the callback instead rather than returning it. This can be
-useful for a lower memory footprint if the file to parse is large or if the user
-wants to write a filter that only picks entities they're interested in. The
-function returns an array reference only if the callback mode is not used.
+Exclusion object into the callback where the user can select which objects they
+want to return. The user has to return 1 if they want the object returned in the
+array ref or undef if they do not.
 
     my $entities = $parser->parse_file('SAM_PUBLIC_DAILY_20160701.dat');
     my $exclusions = $parser->parse_file('SAM_Exclusions_Public_Extract_16202.CSV');
-    $parser->parse_file('SAM_PUBLIC_DAILY_20160701.dat', sub {
+    my $entities = $parser->parse_file('SAM_PUBLIC_DAILY_20160701.dat', sub {
         my ($entity_or_exclusion, $optional_user_arg) = @_;
         #... do something ...
+        return 1 if (!$entity_or_exclusion->is_private);
+        return undef;
     }, $optional_user_arg);
 
 
@@ -87,7 +98,8 @@ sub parse_file {
             carp "Invalid data line \n$line\n" unless $obj->load(@data);
         }
         if (defined $cb and ref $cb eq 'CODE') {
-            &$cb($obj, $cb_arg);
+            my $res = &$cb($obj, $cb_arg);
+            push @$result, $obj if $res;
         } else {
             push @$result, $obj;
         }
@@ -100,7 +112,8 @@ sub parse_file {
         while (my $row = $csv->getline($io->io_handle)) {
             carp "Invalid data line \n$row\n" unless $obj->load(@$row);
             if (defined $cb and ref $cb eq 'CODE') {
-                &$cb($obj, $cb_arg);
+                my $res = &$cb($obj, $cb_arg);
+                push @$result, $obj if $res;
             } else {
                 push @$result, $obj;
             }

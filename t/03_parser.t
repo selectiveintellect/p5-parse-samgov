@@ -29,6 +29,13 @@ ENTITY
         isa_ok($e, 'Parse::SAMGov::Entity');
         note $e;
     }
+    my $entity_541511 = $p->parse_file($filename, sub {
+            return 1 if $_[0]->NAICS->{541511};
+            return undef;
+        });
+    isa_ok($entity_541511, 'ARRAY');
+    is(scalar(@$entity_541511), 1, 'Result has 1 element');
+    is(ref $entity_541511->[0]->NAICS->{541511}, 'HASH');
     unlink $filename;
     done_testing();
 };
