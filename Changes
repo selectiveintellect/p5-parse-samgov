@@ -1,5 +1,9 @@
 {{$NEXT}}
 
+0.104     2016-07-29 13:43:02-04:00 America/New_York
+
+    Fixing minor issues with PAUSE handling
+
 0.103     2016-07-28 17:28:30-04:00 America/New_York
 
     Updating the parse_file() function to handle the code-ref parameter as a
