@@ -57,7 +57,7 @@ isa_ok($poc, 'Parse::SAMGov::Entity::PointOfContact');
 isa_ok($poc, 'Parse::SAMGov::Entity::Address');
 can_ok(
     $poc, qw(address city state zip country phone phone_ext phone_nonUS
-      fax email first last middle title));
+      fax email first last middle title name));
 isa_ok($e->POC_gov_alt,      'Parse::SAMGov::Entity::PointOfContact');
 isa_ok($e->POC_pastperf,     'Parse::SAMGov::Entity::PointOfContact');
 isa_ok($e->POC_pastperf_alt, 'Parse::SAMGov::Entity::PointOfContact');

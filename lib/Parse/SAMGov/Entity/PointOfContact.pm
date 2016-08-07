@@ -45,6 +45,10 @@ Get/Set the middle initial of the point of contact.
 
 Get/Set the last name of the point of contact.
 
+=method name
+
+Get the full name of the point of contact as a string.
+
 =method title
 
 Get/Set the title of the point of contact. Example is CEO, President, etc.
@@ -95,15 +99,23 @@ use overload
     return $str;
   };
 
-has 'first';
-has 'middle';
-has 'last';
+has 'first' => default => sub { '' };
+has 'middle' => default => sub { '' };
+has 'last' => default => sub { '' };
 has 'title';
 has 'phone';
 has 'phone_ext';
 has 'phone_nonUS';
 has 'fax';
 has 'email' => coerce => sub { Email::Valid->address($_[0]); };
+
+sub name {
+    if (length $_[0]->middle) {
+        return join(' ', $_[0]->first, $_[0]->middle, $_[0]->last);
+    } else {
+        return join(' ', $_[0]->first, $_[0]->last);
+    }
+}
 
 1;
 

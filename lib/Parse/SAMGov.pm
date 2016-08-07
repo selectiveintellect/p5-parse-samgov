@@ -14,15 +14,14 @@ use Parse::SAMGov::Mo;
 
 =head1 SYNOPSIS
 
-    my $parser = Parse::SAMGov::Parser->new;
-    my $entities = $parser->parse_file(entity => 'SAM_PUBLIC_DAILY_20160701.dat');
+    my $parser = Parse::SAMGov->new;
+    my $entities = $parser->parse_file('SAM_PUBLIC_DAILY_20160701.dat');
     foreach my $e (@$entities) {
         ## do something with each entity
         say $e->DUNS, ' is a valid entity';
     }
     #... use in filter mode like grep ...
-    my $entities_541511 = $parser->parse_file(entity =>
-                                    'SAM_PUBLIC_DAILY_20160701.dat',
+    my $entities_541511 = $parser->parse_file('SAM_PUBLIC_DAILY_20160701.dat',
                                     sub {
                                         # filter all companies with NAICS code
                                         # being 541511
@@ -42,8 +41,9 @@ use Parse::SAMGov::Mo;
 
 This method takes as arguments the file to be parsed and returns an array
 reference of L<Parse::SAMGov::Entity> or L<Parse::SAMGOv::Exclusion> objects
-depending on the data being parsed. Returns undef if the type is not 'entity' or
-'exclusion'. If the third argument is a coderef then passes each Entity or
+depending on the data being parsed. 
+
+If the second argument is a coderef then passes each Entity or
 Exclusion object into the callback where the user can select which objects they
 want to return. The user has to return 1 if they want the object returned in the
 array ref or undef if they do not.
