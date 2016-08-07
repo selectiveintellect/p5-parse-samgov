@@ -4,6 +4,7 @@ use warnings;
 use feature 'say';
 use Parse::SAMGov;
 use Getopt::Long;
+$| = 1;
 
 sub usage {
     my $app = shift;
@@ -30,8 +31,23 @@ my $entities = $parser->parse_file($filename, sub {
 
 die "No entities found" unless scalar @$entities;
 
+my %filtered = ();
 foreach my $e (@$entities) {
-    say join(',', $e->POC_elec->name, $e->POC_elec->email);
+    my $company = $e->name;
+    $company .= ' dba ' . $e->dba_name if length $e->dba_name;
+    my $naics = join('|', keys %{$e->NAICS});
+    $filtered{$e->POC_elec->email} = { name => $e->POC_elec->name,
+        company => $company, NAICS => $naics } if $e->POC_elec->email;
+    $filtered{$e->POC_elec_alt->email} = { name => $e->POC_elec_alt->name,
+        company => $company, NAICS => $naics } if $e->POC_elec_alt->email;
+    $filtered{$e->POC_gov->email} = { name => $e->POC_gov->name,
+        company => $company, NAICS => $naics } if $e->POC_gov->email;
+    $filtered{$e->POC_gov_alt->email} = { name => $e->POC_gov_alt->name,
+        company => $company, NAICS => $naics } if $e->POC_gov_alt->email;
+}
+foreach my $em (keys %filtered) {
+    say join(',', $em, $filtered{$em}->{name}, $filtered{$em}->{company},
+        $filtered{$em}->{NAICS});
 }
 
 
