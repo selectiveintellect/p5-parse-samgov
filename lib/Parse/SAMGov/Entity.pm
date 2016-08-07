@@ -39,15 +39,8 @@ use overload fallback => 1,
                 if $self->fiscalyear_date;
         $str .= "\nCorporate URL: " . $self->url if $self->url;
         $str .= "\nBusiness Types: [" . join(',', @{$self->biztype}) . "]";
-        my $pnaics;
-        foreach my $k (keys %{$self->NAICS}) {
-            $pnaics = $k if $self->NAICS->{$k}->{is_primary};
-            last if $pnaics;
-        }
         $str .= "\nNAICS Codes: [" . join(',', keys %{$self->NAICS}) . "]";
-        if ($pnaics) {
-            $str .= "\nSmall Business: " . ($self->NAICS->{$pnaics}->{small_biz} ? 'Yes' : 'No');
-        }
+        $str .= "\nSmall Business: " . ($self->is_smallbiz() ? 'Yes' : 'No');
         {
             local $Data::Dumper::Indent = 1;
             local $Data::Dumper::Terse = 1;
@@ -253,6 +246,10 @@ Get/Set the various business types that the entity holds. Requires an array
 reference. The full list of business type codes can be retrieved from the SAM
 Functional Data Dictionary.
 
+=method is_smallbiz
+
+Returns 1 or 0 if the business is defined as a small business or not.
+
 =method NAICS
 
 Get/Set the NAICS codes for the entity. This is a hash reference with the keys
@@ -381,6 +378,17 @@ has 'SBA_descriptions' => default => sub {
         XX => 'SBA Certified HUBZone Firm',
     }
 };
+
+sub is_smallbiz {
+    my $self = shift;
+    my $res = 0;
+    foreach my $k (keys %{$self->NAICS}) {
+        $res = 1 if $self->NAICS->{$k}->{small_biz};
+        $res = 1 if $self->NAICS->{$k}->{exception}->{small_biz};
+        last if $res;
+    }
+    return $res;
+}
 
 sub _trim {
     # from Mojo::Util::trim
