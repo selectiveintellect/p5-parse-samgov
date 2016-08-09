@@ -41,18 +41,23 @@ my $entities = $parser->parse_file($filename, sub {
             my %filtered = ();
             my $email = $e->POC_elec->email;
             my $name = $e->POC_elec->name;
-            $filtered{lc $email} = { name => $name, company => $company} if $email;
+            my $title = $e->POC_elec->title || '';
+            $filtered{lc $email} = { name => $name, title => $title, company => $company} if $email;
             $email = $e->POC_elec_alt->email;
             $name = $e->POC_elec_alt->name;
-            $filtered{lc $email} = { name => $name, company => $company} if $email;
+            $title = $e->POC_elec_alt->title || '';
+            $filtered{lc $email} = { name => $name, title => $title, company => $company} if $email;
             $email = $e->POC_gov->email;
             $name = $e->POC_gov->name;
-            $filtered{lc $email} = { name => $name, company => $company} if $email;
+            $title = $e->POC_gov->title || '';
+            $filtered{lc $email} = { name => $name, title => $title, company => $company} if $email;
             $email = $e->POC_gov_alt->email;
             $name = $e->POC_gov_alt->name;
-            $filtered{lc $email} = { name => $name, company => $company} if $email;
+            $title = $e->POC_gov_alt->title || '';
+            $filtered{lc $email} = { name => $name, title => $title, company => $company} if $email;
             foreach my $em (keys %filtered) {
                 say join(',', $em, uc $filtered{$em}->{name},
+                    uc $filtered{$em}->{title},
                     uc $filtered{$em}->{company});
             }
         }
