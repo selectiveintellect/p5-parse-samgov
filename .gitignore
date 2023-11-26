@@ -5,3 +5,7 @@ tags
 *.bak
 .tidyall.d
 Parse-SAMGov-*
+*.zip
+*.log
+*.err
+*.tmp
