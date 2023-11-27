@@ -497,7 +497,7 @@ sub load_v1 {
         shift; # ignore
     }
     my $pnaics = _trim(shift);
-    $self->NAICS->{$pnaics} = {};
+    $self->NAICS->{$pnaics} = { is_primary => 1 } if length($pnaics);
     $count = int(_trim(shift) || 0) + (length($pnaics) ? 1 : 0);
     if ($count > 0) {
         my @naics = grep { length($_) > 0 } split /~/, shift;
@@ -672,7 +672,7 @@ sub load_v2 {
         shift; # ignore
     }
     my $pnaics = _trim(shift);
-    $self->NAICS->{$pnaics} = {};
+    $self->NAICS->{$pnaics} = { is_primary => 1 } if length ($pnaics);
     $count = int(_trim(shift) || 0) + (length($pnaics) ? 1 : 0);
     if ($count > 0) {
         my @naics = grep { length($_) > 0 } split /~/, shift;

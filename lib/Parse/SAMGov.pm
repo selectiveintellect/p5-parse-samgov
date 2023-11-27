@@ -80,13 +80,13 @@ sub parse_file {
         $line =~ s/\s+$//g;
         next unless length $line;
         my $obj = Parse::SAMGov::Entity->new;
-        if ($line =~ /BOF PUBLIC\s+(\d{8})\s+(\d{8})\s+(\d+)\s+(\d+)/) {
+        if ($line =~ /BOF PUBLIC\s+(?:V2)?\s*(\d{8})\s+(\d{8})\s+(\d+)\s+(\d+)/) {
             $is_entity            = 1;
             $entity_info->{date}  = $1;
             $entity_info->{rows}  = $3;
             $entity_info->{seqno} = $4;
             next;
-        } elsif ($line =~ /EOF\s+PUBLIC\s+(\d{8})\s+(\d{8})\s+(\d+)\s+(\d+)/) {
+        } elsif ($line =~ /EOF\s+PUBLIC\s+(?:V2)?\s*(\d{8})\s+(\d{8})\s+(\d+)\s+(\d+)/) {
             croak "Invalid footer q{$line} in file"
               if (   $entity_info->{date} ne $1
                   or $entity_info->{rows}  ne $3
