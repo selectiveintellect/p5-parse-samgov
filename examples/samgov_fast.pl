@@ -1,10 +1,13 @@
 #!/usr/bin/env perl
+use utf8;
 use strict;
 use warnings;
 use feature 'say';
 use Parse::SAMGov;
 use Getopt::Long;
+binmode STDOUT, ':utf8';
 $| = 1;
+STDOUT->autoflush(1);
 
 sub usage {
     my $app = shift;
@@ -26,7 +29,7 @@ die usage($0) if $help or not $filename;
 
 my $parser = Parse::SAMGov->new;
 
-### we want to filter NAICS 541511, 541512, 541519, 541712
+### we want to filter NAICS 541511, 541512, 541519, 541715
 ### which are NAICS codes for software development
 my $entities = $parser->parse_file($filename, sub {
         # want smallbiz only but isn't smallbiz
@@ -34,31 +37,25 @@ my $entities = $parser->parse_file($filename, sub {
         # want largebiz only but isn't largebiz
         return undef if (!$smallbiz && $largebiz && $_[0]->is_smallbiz);
         # want anything that matches criteria
-        if ($_[0]->NAICS->{541511}) {
+        my $naics = $_[0]->NAICS;
+        my $key_exists = 0;
+        foreach (qw(541511 541512 541519 541715)) {
+            $key_exists++ if $naics->{$_};
+        }
+        if ($key_exists) {
             my $e = $_[0];
             my $company = $e->name;
             $company .= ' dba ' . $e->dba_name if length $e->dba_name;
-            my %filtered = ();
-            my $email = $e->POC_elec->email;
-            my $name = $e->POC_elec->name;
-            my $title = $e->POC_elec->title || '';
-            $filtered{lc $email} = { name => $name, title => $title, company => $company} if $email;
-            $email = $e->POC_elec_alt->email;
-            $name = $e->POC_elec_alt->name;
-            $title = $e->POC_elec_alt->title || '';
-            $filtered{lc $email} = { name => $name, title => $title, company => $company} if $email;
-            $email = $e->POC_gov->email;
-            $name = $e->POC_gov->name;
-            $title = $e->POC_gov->title || '';
-            $filtered{lc $email} = { name => $name, title => $title, company => $company} if $email;
-            $email = $e->POC_gov_alt->email;
-            $name = $e->POC_gov_alt->name;
-            $title = $e->POC_gov_alt->title || '';
-            $filtered{lc $email} = { name => $name, title => $title, company => $company} if $email;
-            foreach my $em (keys %filtered) {
-                say join(',', $em, uc $filtered{$em}->{name},
-                    uc $filtered{$em}->{title},
-                    uc $filtered{$em}->{company});
+            print STDERR "Found $company for you\n";
+            my $url = $e->url;
+            ## skip all non-USA with no websites
+            if (defined $url and length($url)
+                    and ref $e->physical_address eq 'Parse::SAMGov::Entity::Address'
+                    and uc($e->physical_address->country) eq 'USA') {
+                say join(',', $e->UEI, $company, $url, $e->physical_address->city,
+                        $e->physical_address->state, $e->physical_address->country,
+                        $e->start_date->ymd('-'));
+                return 1;
             }
         }
         return undef;
